@@ -255,6 +255,9 @@ class convolutional_layer : public layer {
    **/
   void forward_propagation(const std::vector<tensor_t *> &in_data,
                            std::vector<tensor_t *> &out_data) override {
+    /* std::cout << params_.w_stride << std::endl; */
+    /* std::cout << params_.h_stride << std::endl; */
+
     // apply padding to the input tensor
     padding_op_.copy_and_pad_input(*in_data[0], cws_.prev_out_padded_);
 
@@ -411,12 +414,43 @@ class convolutional_layer : public layer {
     size_t h_stride,
     const core::connection_table &tbl = core::connection_table()) {
     params_.in = in;
-    params_.in_padded =
-      shape3d(in_length(in.width_, w_width, ptype),
-              in_length(in.height_, w_height, ptype), in.depth_);
     params_.out =
       shape3d(conv_out_length(in.width_, w_width, w_stride, ptype),
               conv_out_length(in.height_, w_height, h_stride, ptype), outc);
+    size_t pad_along_height = 0;
+    size_t pad_along_width = 0;
+    if (ptype == padding::same){
+      pad_along_height = ((params_.out.height_ -1) * h_stride + w_height - in.height_);
+      pad_along_width = ((params_.out.width_ - 1) * w_stride + w_width - in.width_);
+      params_.pad_top = pad_along_height / 2;
+      params_.pad_bottom = pad_along_height - params_.pad_top;
+      params_.pad_left = pad_along_width / 2;
+      params_.pad_right = pad_along_width - params_.pad_left;
+
+    } else {
+      params_.pad_top = 0;
+      params_.pad_bottom = 0;
+      params_.pad_left = 0;
+      params_.pad_right = 0;
+    }
+
+#ifdef DNN_USE_TF_PADDING
+    params_.in_padded =
+      shape3d(in_length(in.width_, pad_along_width, ptype),
+              in_length(in.height_, pad_along_height, ptype), in.depth_);
+#else
+    params_.in_padded =
+      shape3d(in_length(in.width_, w_width, ptype),
+              in_length(in.height_, w_height, ptype), in.depth_);
+#endif
+
+      /* std::cout << "pad_along_height = " << pad_along_height << std::endl; */
+      /* std::cout << "pad_along_width = " << pad_along_width << std::endl; */
+      /* std::cout << "pad_top = " << params_.pad_top << std::endl; */
+      /* std::cout << "pad_bottom = " << params_.pad_bottom << std::endl; */
+      /* std::cout << "pad_left = " << params_.pad_left << std::endl; */
+      /* std::cout << "pad_right = " << params_.pad_right << std::endl; */
+
     params_.weight   = shape3d(w_width, w_height, in.depth_ * outc);
     params_.has_bias = has_bias;
     params_.pad_type = ptype;
@@ -424,22 +458,40 @@ class convolutional_layer : public layer {
     params_.h_stride = h_stride;
     params_.tbl      = tbl;
 
+    /* std::cout << params_.in_padded.width_ << std::endl; */
+    /* std::cout << params_.in_padded.height_ << std::endl; */
+    /* std::cout << params_.in_padded.depth_ << std::endl; */
+
     // init padding buffer
     if (params_.pad_type == padding::same) {
+      /* std::cout << params_.in_padded.size() << std::endl; */
       cws_.prev_delta_padded_.resize(
         1, vec_t(params_.in_padded.size(), float_t(0)));
     }
 
     // set parameters to padding operation
+#ifdef DNN_USE_TF_PADDING
+    padding_op_ = core::Conv2dPaddingTF(params_);
+#else
     padding_op_ = core::Conv2dPadding(params_);
+#endif
   }
 
+#ifdef DNN_USE_TF_PADDING
+  size_t in_length(size_t in_length,
+                   size_t dim_padding,
+                   padding pad_type) const {
+    return pad_type == padding::same ? (in_length + dim_padding)
+                                     : in_length;
+  }
+#else
   size_t in_length(size_t in_length,
                    size_t window_size,
                    padding pad_type) const {
     return pad_type == padding::same ? (in_length + window_size - 1)
                                      : in_length;
   }
+#endif
 
   static size_t conv_out_dim(size_t in_width,
                              size_t in_height,
@@ -493,8 +545,12 @@ class convolutional_layer : public layer {
   /* The convolution parameters */
   core::conv_params params_;
 
+#ifdef DNN_USE_TF_PADDING
+  core::Conv2dPaddingTF padding_op_;
+#else
   /* Padding operation */
   core::Conv2dPadding padding_op_;
+#endif
 
   /* forward op context */
   core::OpKernelContext fwd_ctx_;

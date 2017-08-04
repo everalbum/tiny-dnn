@@ -17,6 +17,7 @@ void register_layers(T* h) {
   h->template register_layer<average_pooling_layer>("avepool");
   h->template register_layer<average_unpooling_layer>("aveunpool");
   h->template register_layer<batch_normalization_layer>("batchnorm");
+  h->template register_layer<batch_normalization_tf_layer>("batchnormtf");
   h->template register_layer<concat_layer>("concat");
   h->template register_layer<convolutional_layer>("conv");
   h->template register_layer<deconvolutional_layer>("deconv");

@@ -294,6 +294,11 @@ class layer : public node {
    **/
   virtual std::string layer_type() const = 0;
 
+
+  void set_layer_id(std::string id) { layer_id_ = id; }
+
+  std::string get_layer_id() { return layer_id_; }
+
   /**
    * number of incoming connections for each output unit
    * used only for weight/bias initialization methods which require fan-in
@@ -754,6 +759,8 @@ class layer : public node {
  private:
   /** Flag indicating whether the layer/node parameters are trainable */
   bool trainable_;
+
+  std::string layer_id_;
   /** Pointer to the function for weights initialization */
   std::shared_ptr<weight_init::function> weight_init_;
   /** Pointer to the function for biases initialization */

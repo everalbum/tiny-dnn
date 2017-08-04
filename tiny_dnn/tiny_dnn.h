@@ -156,6 +156,8 @@ using softsign = tiny_dnn::softsign_layer;
 
 using batch_norm = tiny_dnn::batch_normalization_layer;
 
+using batch_norm_tf = tiny_dnn::batch_normalization_tf_layer;
+
 using slice = tiny_dnn::slice_layer;
 
 using power = tiny_dnn::power_layer;

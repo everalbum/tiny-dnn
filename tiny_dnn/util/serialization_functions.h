@@ -151,6 +151,32 @@ struct LoadAndConstruct<tiny_dnn::batch_normalization_layer> {
 };
 
 template <>
+struct LoadAndConstruct<tiny_dnn::batch_normalization_tf_layer> {
+  template <class Archive>
+  static void load_and_construct(
+    Archive &ar,
+    cereal::construct<tiny_dnn::batch_normalization_tf_layer> &construct) {
+    size_t in_spatial_size, in_channels;
+    tiny_dnn::float_t eps, momentum;
+    tiny_dnn::net_phase phase;
+    tiny_dnn::vec_t mean, variance, beta;
+
+    ::detail::arc(ar, ::detail::make_nvp("in_spatial_size", in_spatial_size),
+                  ::detail::make_nvp("in_channels", in_channels),
+                  ::detail::make_nvp("epsilon", eps),
+                  ::detail::make_nvp("momentum", momentum),
+                  ::detail::make_nvp("phase", phase),
+                  ::detail::make_nvp("mean", mean),
+                  ::detail::make_nvp("beta", beta),
+                  ::detail::make_nvp("variance", variance));
+    construct(in_spatial_size, in_channels, eps, momentum, phase);
+    construct->set_mean(mean);
+    construct->set_variance(variance);
+    construct->set_beta(beta);
+  }
+};
+
+template <>
 struct LoadAndConstruct<tiny_dnn::concat_layer> {
   template <class Archive>
   static void load_and_construct(
@@ -648,8 +674,24 @@ struct serialization_buddy {
   }
 
   template <class Archive>
+  static inline void serialize(Archive &ar,
+                               tiny_dnn::batch_normalization_tf_layer &layer) {
+    ::detail::arc(ar,
+                  ::detail::make_nvp("in_spatial_size", layer.in_spatial_size_),
+                  ::detail::make_nvp("in_channels", layer.in_channels_),
+                  ::detail::make_nvp("epsilon", layer.eps_),
+                  ::detail::make_nvp("momentum", layer.momentum_),
+                  ::detail::make_nvp("phase", layer.phase_),
+                  ::detail::make_nvp("mean", layer.mean_),
+                  ::detail::make_nvp("beta", layer.beta_),
+                  ::detail::make_nvp("id", layer.layer_id_),
+                  ::detail::make_nvp("variance", layer.variance_));
+  }
+
+  template <class Archive>
   static inline void serialize(Archive &ar, tiny_dnn::concat_layer &layer) {
-    ::detail::arc(ar, ::detail::make_nvp("in_size", layer.in_shapes_));
+    ::detail::arc(ar, ::detail::make_nvp("in_size", layer.in_shapes_),
+                  ::detail::make_nvp("id", layer.layer_id_));
   }
 
   template <class Archive>
@@ -664,7 +706,8 @@ struct serialization_buddy {
                   ::detail::make_nvp("pad_type", params_.pad_type),
                   ::detail::make_nvp("has_bias", params_.has_bias),
                   ::detail::make_nvp("w_stride", params_.w_stride),
-                  ::detail::make_nvp("h_stride", params_.h_stride));
+                  ::detail::make_nvp("h_stride", params_.h_stride),
+                  ::detail::make_nvp("id", layer.layer_id_));
   }
 
   template <class Archive>
@@ -695,7 +738,8 @@ struct serialization_buddy {
     auto &params_ = layer.params_;
     ::detail::arc(ar, ::detail::make_nvp("in_size", params_.in_size_),
                   ::detail::make_nvp("out_size", params_.out_size_),
-                  ::detail::make_nvp("has_bias", params_.has_bias_));
+                  ::detail::make_nvp("has_bias", params_.has_bias_),
+                  ::detail::make_nvp("id", layer.layer_id_));
   }
 
   template <class Archive>
@@ -735,6 +779,7 @@ struct serialization_buddy {
                   ::detail::make_nvp("pool_size_y", params_.pool_size_y),
                   ::detail::make_nvp("stride_x", params_.stride_x),
                   ::detail::make_nvp("stride_y", params_.stride_y),
+                  ::detail::make_nvp("id", layer.layer_id_),
                   ::detail::make_nvp("pad_type", params_.pad_type));
   }
 
@@ -821,7 +866,8 @@ struct serialization_buddy {
 
   template <class Archive>
   static inline void serialize(Archive &ar, tiny_dnn::relu_layer &layer) {
-    ::detail::arc(ar, ::detail::make_nvp("in_size", layer.in_shape()[0]));
+    ::detail::arc(ar, ::detail::make_nvp("in_size", layer.in_shape()[0]),
+                  ::detail::make_nvp("id", layer.layer_id_));
   }
 
   template <class Archive>

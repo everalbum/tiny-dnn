@@ -17,6 +17,7 @@ namespace core {
 class maxpool_params : public Params {
  public:
   index3d<size_t> in;
+  index3d<size_t> in_padded;
   index3d<size_t> out;
   size_t pool_size_x;
   size_t pool_size_y;

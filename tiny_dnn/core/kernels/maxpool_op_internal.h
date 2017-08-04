@@ -22,12 +22,20 @@ inline void maxpool_op_internal(const tensor_t &in_data,
     const vec_t &in          = in_data[sample];
     vec_t &out               = out_data[sample];
     std::vector<size_t> &max = max_idx[sample];
+    /* std::cout << "printing data" << std::endl; */
+    /* int i = 0; */
+    /* for (auto a : in) { */
+    /*   std::cout << i << " " << a << std::endl; */
+    /*   i++; */
+    /* } */
 
     for (size_t i = 0; i < out2in.size(); i++) {
       const auto &in_index = out2in[i];
       float_t max_value    = std::numeric_limits<float_t>::lowest();
       size_t idx           = 0;
+      /* std::cout << std::endl << "array" << std::endl; */
       for (auto j : in_index) {
+        /* std::cout << " " << in[j]; */
         if (in[j] > max_value) {
           max_value = in[j];
           idx       = j;
@@ -35,6 +43,7 @@ inline void maxpool_op_internal(const tensor_t &in_data,
       }
       max[i] = idx;
       out[i] = max_value;
+      /* std::cout << std::endl << "max = " << max_value << std::endl; */
     }
   });
 }

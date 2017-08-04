@@ -71,6 +71,10 @@ class conv_params : public Params {
   padding pad_type;
   size_t w_stride;
   size_t h_stride;
+  size_t pad_left;
+  size_t pad_right;
+  size_t pad_top;
+  size_t pad_bottom;
 
   friend std::ostream &operator<<(std::ostream &o,
                                   const core::conv_params &param) {
@@ -124,6 +128,100 @@ class Conv2dPadding {
       }
     });
 
+    // shrink buffer to output
+    out = buf;
+  }
+
+  /* Applies unpadding to an input tensor given the convolution parameters
+   *
+   * @param in The input tensor
+   * @param out The output tensor with unpadding applied
+   */
+  void copy_and_unpad_delta(const tensor_t &delta, tensor_t &delta_unpadded) {
+    if (params_.pad_type == padding::valid) {
+      return;
+    }
+
+    tensor_t buf(delta.size());
+
+    for_i(true, buf.size(), [&](size_t sample) {
+      // alloc temporary buffer.
+      buf[sample].resize(params_.in.size());
+
+      for (size_t c = 0; c < params_.in.depth_; c++) {
+        const float_t *pin = &delta[sample][params_.in_padded.get_index(
+          params_.weight.width_ / 2, params_.weight.height_ / 2, c)];
+        float_t *pdst = &buf[sample][params_.in.get_index(0, 0, c)];
+
+        for (size_t y = 0; y < params_.in.height_; y++) {
+          std::copy(pin, pin + params_.in.width_, pdst);
+          pdst += params_.in.width_;
+          pin += params_.in_padded.width_;
+        }
+      }
+    });
+
+    // shrink buffer to output
+    delta_unpadded = buf;
+  }
+
+ private:
+  conv_params params_;
+};
+
+class Conv2dPaddingTF {
+ public:
+  Conv2dPaddingTF() {}
+  explicit Conv2dPaddingTF(const conv_params &params) : params_(params) {}
+
+  /* Applies padding to an input tensor given the convolution parameters
+   *
+   * @param in The input tensor
+   * @param out The output tensor with padding applied
+   */
+  void copy_and_pad_input(const tensor_t &in, tensor_t &out) {
+    if (params_.pad_type == padding::valid) {
+      return;
+    }
+
+    /* std::cout << "PADDING!" << std::endl; */
+    /* std::cout << params_.in_padded.height_ << std::endl; */
+    /* std::cout << params_.in_padded.width_ << std::endl; */
+
+    tensor_t buf(in.size());
+    /* std::cout << "in.size() = " << in.size() << std::endl; */
+
+    for_i(true, buf.size(), [&](size_t sample) {
+      /* std::cout << sample << std::endl; */
+      // alloc temporary buffer.
+      buf[sample].resize(params_.in_padded.size());
+
+      // make padded version in order to avoid corner-case in fprop/bprop
+      for (size_t c = 0; c < params_.in.depth_; c++) {
+        /* std::cout << "foo" << params_.in_padded.get_index( */
+        /*   params_.pad_left, params_.pad_top, c) << std::endl; */
+        /* std::cout << "foo2" << params_.in_padded.get_index( */
+        /*   params_.weight.width_ / 2, params_.weight.height_ / 2, c) << std::endl; */
+        /* std::cout << "in.width" << params_.in.width_ << std::endl; */
+        /* std::cout << "in_padded.width" << params_.in_padded.width_ << std::endl; */
+
+        float_t *pimg = &buf[sample][params_.in_padded.get_index(
+          params_.pad_left, params_.pad_top, c)];
+
+        const float_t *pin = &in[sample][params_.in.get_index(0, 0, c)];
+
+        for (size_t y = 0; y < params_.in.height_; y++) {
+          std::copy(pin, pin + params_.in.width_, pimg);
+            /* std::cout << "pin" << std::to_string(*pin) << std::endl; */
+              /* std::cout << "pimg" << std::to_string(*pimg) << std::endl; */
+          pin += params_.in.width_;
+          pimg += params_.in_padded.width_;
+        }
+      }
+    });
+
+    /* for (auto a: buf[0]) */
+    /*   std::cout << a << std::endl; */
     // shrink buffer to output
     out = buf;
   }

@@ -162,6 +162,7 @@ struct layer_tuple {
     layers_.push_back(l1);
     layers_.push_back(l2);
   }
+  layer_tuple() {}
   std::vector<T> layers_;
 };
 

@@ -7,6 +7,7 @@
 */
 #pragma once
 
+#include <stdlib.h>
 #include "tiny_dnn/core/framework/op_kernel.h"
 
 #include "tiny_dnn/core/kernels/maxpool_op_avx.h"

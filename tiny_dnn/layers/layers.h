@@ -10,6 +10,7 @@
 #include "tiny_dnn/layers/average_pooling_layer.h"
 #include "tiny_dnn/layers/average_unpooling_layer.h"
 #include "tiny_dnn/layers/batch_normalization_layer.h"
+#include "tiny_dnn/layers/batch_normalization_tf_layer.h"
 #include "tiny_dnn/layers/concat_layer.h"
 #include "tiny_dnn/layers/convolutional_layer.h"
 #include "tiny_dnn/layers/deconvolutional_layer.h"
