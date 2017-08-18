@@ -383,10 +383,20 @@ class layer : public node {
   }
 
   virtual void load(const std::vector<float_t> &src, int &idx) {  // NOLINT
+    std::cout << "loading" << std::endl;
+    std::cout << "src = " << src[idx] << std::endl;
     auto all_weights = weights();
+    std::cout << "all weight size = " << all_weights.size() << std::endl;
+
     for (auto &weight : all_weights) {
-      for (auto &w : *weight) w = src[idx++];
+
+      std::cout << "weight size = " << weight->size() << std::endl;
+      for (auto &w : *weight){
+        w = src[idx++];
+      }
     }
+
+    std::cout << "loaded" << std::endl;
     initialized_ = true;
   }
 
