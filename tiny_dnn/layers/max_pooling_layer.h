@@ -148,10 +148,10 @@ class max_pooling_layer : public layer {
     conv_params.pad_bottom = pad_along_height - conv_params.pad_top;
     conv_params.pad_left = pad_along_width / 2;
     conv_params.pad_right = pad_along_width - conv_params.pad_left;
-    std::cout << "pad_top" << conv_params.pad_top << std::endl;
-    std::cout << "pad_bottom" << conv_params.pad_bottom << std::endl;
-    std::cout << "pad_left" << conv_params.pad_left << std::endl;
-    std::cout << "pad_right" << conv_params.pad_right << std::endl;
+    /* std::cout << "pad_top" << conv_params.pad_top << std::endl; */
+    /* std::cout << "pad_bottom" << conv_params.pad_bottom << std::endl; */
+    /* std::cout << "pad_left" << conv_params.pad_left << std::endl; */
+    /* std::cout << "pad_right" << conv_params.pad_right << std::endl; */
 
     conv_params.in_padded =
       shape3d(in_length(params_.in.width_, pad_along_width, params_.pad_type),
@@ -160,15 +160,15 @@ class max_pooling_layer : public layer {
     conv_params.in =
       shape3d(params_.in.width_, params_.in.height_, params_.in.depth_);
 
-    std::cout << conv_params.in_padded.height_ << std::endl;
-    std::cout << conv_params.in_padded.width_ << std::endl;
+    /* std::cout << conv_params.in_padded.height_ << std::endl; */
+    /* std::cout << conv_params.in_padded.width_ << std::endl; */
 
     core::Conv2dPaddingTF padding_op = core::Conv2dPaddingTF(conv_params);
 
 
 
     // apply padding to the input tensor
-    std::cout << "mp padding" << std::endl;
+    /* std::cout << "mp padding" << std::endl; */
     padding_op.copy_and_pad_input(*in_data[0], cws_.prev_out_padded_);
 
     fwd_in_data_.resize(in_data.size());
